@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using contracts;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 
@@ -8,11 +12,16 @@ namespace api.Endpoints.Orders
     [ApiController]
     public class OrdersController : ControllerBase
     {
+        private readonly IBus bus;
         private readonly IOrderService orderService;
 
-        public OrdersController(IOrderService orderService)
+        public OrdersController(
+            IOrderService orderService,
+            IBus bus
+        )
         {
             this.orderService = orderService;
+            this.bus = bus;
         }
 
         // GET: api/orders
@@ -42,9 +51,28 @@ namespace api.Endpoints.Orders
 
         // POST: api/orders
         [HttpPost]
-        public IActionResult Post([FromBody] Order order)
+        public async Task<IActionResult> Post([FromBody] Order order)
         {
-            return Ok(this.orderService.Create(order));
+            var result = this.orderService.Create(order);
+
+            var sendEndpoint = await this.bus.GetSendEndpoint(new Uri("exchange:contracts:OrderSubmitted"));
+
+            await sendEndpoint.Send<OrderSubmitted>(new
+            {
+                OrderId = result.Id
+            });
+
+            return Ok(result);
+        }
+
+
+        public async Task NotifyOrderSubmitted(IPublishEndpoint publishEndpoint)
+        {
+            await publishEndpoint.Publish<OrderSubmitted>(new
+            {
+                OrderId = "27",
+                OrderDate = DateTime.UtcNow
+            });
         }
 
         // DELETE: api/orders/abc
