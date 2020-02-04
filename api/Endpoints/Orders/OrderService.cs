@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using MongoDB.Bson;
+﻿using System;
+using System.Collections.Generic;
 using MongoDB.Driver;
 
 namespace api.Endpoints.Orders
@@ -8,42 +8,51 @@ namespace api.Endpoints.Orders
     {
         private readonly IMongoCollection<Order> collection;
 
-        public OrderService(IMongodbSettings settings)
+        public OrderService(IMongoCollection<Order> collection)
         {
-            var client = new MongoClient(settings.ConnectionString);
-            var database = client.GetDatabase(settings.DatabaseName);
-            this.collection = database.GetCollection<Order>(settings.OrdersCollectionName);
+            this.collection = collection;
         }
 
         public IEnumerable<IOrder> Get()
         {
-            return this.collection.Find(filter: order => true).ToCursor().ToEnumerable();
+            return this.collection
+                .Find(filter: order => true).ToCursor().ToEnumerable();
         }
 
-        public IOrder Get(string id)
+        public IOrder Get(Guid id)
         {
             return this.collection.Find(filter: book => book.Id == id).FirstOrDefault();
         }
 
         public IOrder Create(IOrder order)
         {
-            var id = ObjectId.GenerateNewId().ToString();
-
-            var document = new Order {Id = id, Amount = order.Amount};
+            var document = new Order
+            {
+                Id = Guid.NewGuid(),
+                Amount = order.Amount
+            };
 
             this.collection.InsertOne(document);
 
             return document;
         }
 
-        public void Remove(IOrder order)
+        public IOrder Update(IOrder order)
         {
-            this.collection.DeleteOne(filter: obj => obj.Id == order.Id);
+            return this.collection.FindOneAndUpdate<Order, Order>(
+                filter: x =>
+                    x.Id == order.Id &&
+                    x.Version == order.Version,
+                Builders<Order>.Update.Combine(
+                    Builders<Order>.Update.Inc(field: x => x.Version, 1),
+                    Builders<Order>.Update.Set(field: x => x.Amount, order.Amount)),
+                new FindOneAndUpdateOptions<Order, Order> {ReturnDocument = ReturnDocument.After}
+            );
         }
 
-        public void Remove(string id)
+        public IOrder Delete(Guid id)
         {
-            var deleteResult = this.collection.DeleteOne(filter: book => book.Id == id);
+            return this.collection.FindOneAndDelete(filter: x => x.Id == id);
         }
     }
 }

@@ -1,0 +1,11 @@
+﻿{
+  "mongodb": {
+    "connectionString": "mongodb://root:a@localhost:27017",
+    "databaseName": "api"
+  },
+  "rabbitmq": {
+    "uri": "rabbitmq://localhost:5672",
+    "userName": "mova",
+    "userPassword": "a"
+  } 
+}

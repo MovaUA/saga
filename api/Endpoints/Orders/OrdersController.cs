@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using contracts;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 
 namespace api.Endpoints.Orders
 {
@@ -32,16 +31,16 @@ namespace api.Endpoints.Orders
         }
 
         // GET: api/orders/abc
-        [HttpGet("{id:length(24)}", Name = "Get")]
+        [HttpGet("{id}")]
         public ActionResult<IOrder> Get(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
                 return NotFound();
 
-            if (!ObjectId.TryParse(id, out _))
+            if (!Guid.TryParse(id, out var idValue))
                 return NotFound();
 
-            var order = this.orderService.Get(id);
+            var order = this.orderService.Get(idValue);
 
             if (order == null)
                 return NotFound();
@@ -55,9 +54,9 @@ namespace api.Endpoints.Orders
         {
             var result = this.orderService.Create(order);
 
-            var sendEndpoint = await this.bus.GetSendEndpoint(new Uri("exchange:contracts:OrderSubmitted"));
+            var sendEndpoint = await this.bus.GetSendEndpoint(new Uri("exchange:contracts:OrderCreated"));
 
-            await sendEndpoint.Send<OrderSubmitted>(new
+            await sendEndpoint.Send<OrderCreated>(new
             {
                 OrderId = result.Id
             });
@@ -65,32 +64,38 @@ namespace api.Endpoints.Orders
             return Ok(result);
         }
 
-
-        public async Task NotifyOrderSubmitted(IPublishEndpoint publishEndpoint)
+        [HttpPut("{id}")]
+        public IActionResult Put(string id, [FromBody] Order order)
         {
-            await publishEndpoint.Publish<OrderSubmitted>(new
-            {
-                OrderId = "27",
-                OrderDate = DateTime.UtcNow
-            });
+            if (!Guid.TryParse(id, out var idValue))
+                return BadRequest();
+
+            var current = (Order) this.orderService.Get(idValue);
+
+            if (current == null)
+                return NotFound();
+
+            current.Amount = order.Amount;
+
+            var updated = this.orderService.Update(current);
+
+            if (updated == null)
+                return Conflict();
+
+            return Ok(updated);
         }
 
         // DELETE: api/orders/abc
-        [HttpDelete("{id:length(24)}")]
+        [HttpDelete("{id}")]
         public IActionResult Delete(string id)
         {
-            if (string.IsNullOrWhiteSpace(id))
-                return NotFound();
+            if (!Guid.TryParse(id, out var idValue))
+                return BadRequest();
 
-            if (!ObjectId.TryParse(id, out _))
-                return NotFound();
-
-            var order = this.orderService.Get(id);
+            var order = this.orderService.Delete(idValue);
 
             if (order == null)
                 return NotFound();
-
-            this.orderService.Remove(order);
 
             return Ok(order);
         }

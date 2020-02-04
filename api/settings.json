@@ -1,0 +1,20 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*",
+  "mongodb": {
+    "ordersCollectionName": "orders",
+    "connectionString": "mongodb://root:a@localhost:27017",
+    "databaseName": "api"
+  },
+  "rabbitmq": {
+    "uri": "rabbitmq://localhost:5672",
+    "userName": "mova",
+    "userPassword": "a"
+  }
+}

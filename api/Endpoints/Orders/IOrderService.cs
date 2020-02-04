@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace api.Endpoints.Orders
 {
     public interface IOrderService
     {
         IEnumerable<IOrder> Get();
-        IOrder Get(string id);
+        IOrder Get(Guid id);
         IOrder Create(IOrder order);
-        void Remove(IOrder order);
-        void Remove(string id);
+        IOrder Update(IOrder order);
+        IOrder Delete(Guid id);
     }
 }
