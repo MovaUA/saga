@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "contracts", "contracts\cont
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "saga", "saga\saga.csproj", "{0A59875D-3934-4219-8867-2BD90744AE34}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "log", "log\log.csproj", "{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{0A59875D-3934-4219-8867-2BD90744AE34}.Release|x64.Build.0 = Release|Any CPU
 		{0A59875D-3934-4219-8867-2BD90744AE34}.Release|x86.ActiveCfg = Release|Any CPU
 		{0A59875D-3934-4219-8867-2BD90744AE34}.Release|x86.Build.0 = Release|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Debug|x64.Build.0 = Debug|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Debug|x86.Build.0 = Debug|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Release|x64.ActiveCfg = Release|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Release|x64.Build.0 = Release|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Release|x86.ActiveCfg = Release|Any CPU
+		{1F14800B-E112-4736-9D1C-5DD3E9EC49C4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
