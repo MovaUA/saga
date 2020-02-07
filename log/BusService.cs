@@ -16,12 +16,12 @@ namespace log
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return this.busControl.StartAsync(cancellationToken);
+            return this.busControl.StartAsync(cancellationToken: cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            return this.busControl.StopAsync(cancellationToken);
+            return this.busControl.StopAsync(cancellationToken: cancellationToken);
         }
     }
 }

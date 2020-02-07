@@ -1,10 +1,11 @@
-﻿using System;
+﻿using System.Diagnostics.CodeAnalysis;
 using Automatonymous;
 using contracts;
 using MassTransit;
 
 namespace saga
 {
+    [SuppressMessage(category: "ReSharper", checkId: "UnusedAutoPropertyAccessor.Local")]
     public class OrderStateMachine : MassTransitStateMachine<OrderState>
     {
         public State Created { get; private set; }
@@ -15,29 +16,40 @@ namespace saga
 
         public OrderStateMachine()
         {
-            Event(propertyExpression: () => OrderCreated,
+            Event(
+                propertyExpression: () => OrderCreated,
                 configureEventCorrelation: e =>
                 {
                     e.CorrelateById(selector: ctx => ctx.Message.OrderId);
 
-                    e.InsertOnInitial = true;
+                    //e.InsertOnInitial = true;
 
-                    e.SetSagaFactory(factoryMethod: ctx => new OrderState {CorrelationId = ctx.Message.OrderId});
-                });
+                    //e.SetSagaFactory(factoryMethod: ctx => new OrderState { CorrelationId = ctx.Message.OrderId });
+                }
+            );
 
-            Event(propertyExpression: () => OrderLogged,
-                configureEventCorrelation: e => { e.CorrelateById(selector: ctx => ctx.Message.OrderId); });
+            Event(
+                propertyExpression: () => OrderLogged,
+                configureEventCorrelation: e => { e.CorrelateById(selector: ctx => ctx.Message.OrderId); }
+            );
 
-            InstanceState(instanceStateProperty: x => x.CurrentState, Created, Logged);
+            InstanceState(instanceStateProperty: x => x.CurrentState);
+
+            //InstanceState(instanceStateProperty: x => x.CurrentState, Created, Logged);
 
             Initially(
-                When(OrderCreated)
+                When(@event: OrderCreated)
                     .SendAsync(
-                        new Uri("exchange:contracts:LogOrder"),
-                        messageFactory: ctx => ctx.Init<LogOrder>(new {OrderId = ctx.Instance.CorrelationId}))
-                    .TransitionTo(Created));
+                        messageFactory: ctx => ctx.Init<LogOrder>(values: new {OrderId = ctx.Instance.CorrelationId})
+                    )
+                    .TransitionTo(toState: Created)
+            );
 
-            During(Created, When(OrderLogged).Finalize());
+            During(
+                state: Created,
+                When(@event: OrderLogged)
+                    .TransitionTo(toState: Logged)
+            );
         }
     }
 }

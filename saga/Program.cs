@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using contracts;
 using MassTransit;
 using MassTransit.MongoDbIntegration.Saga;
 using MassTransit.Saga;
@@ -19,9 +20,9 @@ namespace saga
 
             host.ConfigureAppConfiguration(configureDelegate: (ctx, config) =>
             {
-                config.AddJsonFile("settings.json");
+                config.AddJsonFile(path: "settings.json");
                 config.AddEnvironmentVariables();
-                config.AddCommandLine(args);
+                config.AddCommandLine(args: args);
             });
 
             host.ConfigureLogging(configureLogging: (_, logging) =>
@@ -33,12 +34,12 @@ namespace saga
 
             host.ConfigureServices(configureDelegate: (ctx, services) =>
             {
-                services.Configure<MongodbSettings>(ctx.Configuration.GetSection("mongodb"));
+                services.Configure<MongodbSettings>(config: ctx.Configuration.GetSection(key: "mongodb"));
 
                 services.AddSingleton<IMongodbSettings>(implementationFactory: sp =>
                     sp.GetRequiredService<IOptions<MongodbSettings>>().Value);
 
-                services.Configure<RabbitmqSettings>(ctx.Configuration.GetSection("rabbitmq"));
+                services.Configure<RabbitmqSettings>(config: ctx.Configuration.GetSection(key: "rabbitmq"));
 
                 services.AddSingleton<IRabbitmqSettings>(implementationFactory: sp =>
                     sp.GetRequiredService<IOptions<RabbitmqSettings>>().Value);
@@ -48,9 +49,9 @@ namespace saga
                     var mongodb = sp.GetRequiredService<IMongodbSettings>();
 
                     return new MongoDbSagaRepository<OrderState>(
-                        mongodb.ConnectionString,
-                        mongodb.DatabaseName,
-                        "order-sagas"
+                        connectionString: mongodb.ConnectionString,
+                        database: mongodb.DatabaseName,
+                        collectionName: "order-sagas"
                     );
                 });
 
@@ -62,14 +63,20 @@ namespace saga
                         {
                             var rabbitmq = sp.GetRequiredService<IRabbitmqSettings>();
 
-                            cfg.Host(new Uri(rabbitmq.Uri), configure: hc =>
-                            {
-                                hc.Username(rabbitmq.UserName);
-                                hc.Password(rabbitmq.UserPassword);
-                            });
+                            cfg.Host(
+                                hostAddress: new Uri(uriString: rabbitmq.Uri),
+                                configure: hc =>
+                                {
+                                    hc.Username(username: rabbitmq.UserName);
+                                    hc.Password(password: rabbitmq.UserPassword);
+                                }
+                            );
 
-                            cfg.ReceiveEndpoint("order",
-                                configureEndpoint: e => { e.StateMachineSaga(new OrderStateMachine(), repository); });
+                            cfg.ReceiveEndpoint(
+                                queueName: "order",
+                                configureEndpoint: e =>
+                                    e.StateMachineSaga(stateMachine: new OrderStateMachine(), repository: repository)
+                            );
                         });
                     }
                 );
@@ -77,6 +84,9 @@ namespace saga
                 //services.AddHostedService<TestService>();
                 services.AddHostedService<MassTransitService>();
             });
+
+            EndpointConvention.Map<LogOrder>(
+                destinationAddress: new Uri(uriString: "exchange:contracts:LogOrder"));
 
             return host.RunConsoleAsync();
         }

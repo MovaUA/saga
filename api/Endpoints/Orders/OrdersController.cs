@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace api.Endpoints.Orders
 {
-    [Route("api/[controller]")]
+    [Route(template: "api/[controller]")]
     [ApiController]
     public class OrdersController : ControllerBase
     {
@@ -31,73 +31,74 @@ namespace api.Endpoints.Orders
         }
 
         // GET: api/orders/abc
-        [HttpGet("{id}")]
+        [HttpGet(template: "{id}")]
         public ActionResult<IOrder> Get(string id)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(value: id))
                 return NotFound();
 
-            if (!Guid.TryParse(id, out var idValue))
+            if (!Guid.TryParse(input: id, result: out var idValue))
                 return NotFound();
 
-            var order = this.orderService.Get(idValue);
+            var order = this.orderService.Get(id: idValue);
 
             if (order == null)
                 return NotFound();
 
-            return new ActionResult<IOrder>(order);
+            return new ActionResult<IOrder>(value: order);
         }
 
         // POST: api/orders
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Order order)
         {
-            var result = this.orderService.Create(order);
+            var result = this.orderService.Create(order: order);
 
-            var sendEndpoint = await this.bus.GetSendEndpoint(new Uri("exchange:contracts:OrderCreated"));
+            var sendEndpoint =
+                await this.bus.GetSendEndpoint(address: new Uri(uriString: "exchange:contracts:OrderCreated"));
 
-            await sendEndpoint.Send<OrderCreated>(new
+            await sendEndpoint.Send<OrderCreated>(values: new
             {
                 OrderId = result.Id
             });
 
-            return Ok(result);
+            return Ok(value: result);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut(template: "{id}")]
         public IActionResult Put(string id, [FromBody] Order order)
         {
-            if (!Guid.TryParse(id, out var idValue))
+            if (!Guid.TryParse(input: id, result: out var idValue))
                 return BadRequest();
 
-            var current = (Order) this.orderService.Get(idValue);
+            var current = (Order) this.orderService.Get(id: idValue);
 
             if (current == null)
                 return NotFound();
 
             current.Amount = order.Amount;
 
-            var updated = this.orderService.Update(current);
+            var updated = this.orderService.Update(order: current);
 
             if (updated == null)
                 return Conflict();
 
-            return Ok(updated);
+            return Ok(value: updated);
         }
 
         // DELETE: api/orders/abc
-        [HttpDelete("{id}")]
+        [HttpDelete(template: "{id}")]
         public IActionResult Delete(string id)
         {
-            if (!Guid.TryParse(id, out var idValue))
+            if (!Guid.TryParse(input: id, result: out var idValue))
                 return BadRequest();
 
-            var order = this.orderService.Delete(idValue);
+            var order = this.orderService.Delete(id: idValue);
 
             if (order == null)
                 return NotFound();
 
-            return Ok(order);
+            return Ok(value: order);
         }
     }
 }

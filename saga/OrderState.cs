@@ -7,9 +7,10 @@ namespace saga
 {
     public class OrderState : SagaStateMachineInstance, IVersionedSaga
     {
-        public int CurrentState { get; set; }
-        public int Version { get; set; }
+        [BsonId]
+        public Guid CorrelationId { get; set; }
 
-        [BsonId] public Guid CorrelationId { get; set; }
+        public string CurrentState { get; set; }
+        public int Version { get; set; }
     }
 }

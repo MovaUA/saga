@@ -21,7 +21,7 @@ namespace api
         /// </summary>
         public void ConfigureServices(IServiceCollection services)
         {
-            Configuration.AddOrdersEndpoint(services);
+            Configuration.AddOrdersEndpoint(services: services);
 
             services.AddControllers();
         }

@@ -32,7 +32,7 @@ namespace api.Endpoints.Orders
                 Amount = order.Amount
             };
 
-            this.collection.InsertOne(document);
+            this.collection.InsertOne(document: document);
 
             return document;
         }
@@ -43,10 +43,10 @@ namespace api.Endpoints.Orders
                 filter: x =>
                     x.Id == order.Id &&
                     x.Version == order.Version,
-                Builders<Order>.Update.Combine(
-                    Builders<Order>.Update.Inc(field: x => x.Version, 1),
-                    Builders<Order>.Update.Set(field: x => x.Amount, order.Amount)),
-                new FindOneAndUpdateOptions<Order, Order> {ReturnDocument = ReturnDocument.After}
+                update: Builders<Order>.Update.Combine(
+                    Builders<Order>.Update.Inc(field: x => x.Version, value: 1),
+                    Builders<Order>.Update.Set(field: x => x.Amount, value: order.Amount)),
+                options: new FindOneAndUpdateOptions<Order, Order> {ReturnDocument = ReturnDocument.After}
             );
         }
 

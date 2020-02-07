@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using RabbitMQ.Client;
 
 namespace log
 {
@@ -54,25 +55,26 @@ namespace log
                 });
 
                 services.AddSingleton<IConsumer<LogOrder>, LogOrderConsumer>();
+                //services.AddSingleton<IConsumer<OrderLogged>, OrderLoggedConsumer>();
 
                 services.AddMassTransit(configure: x =>
                 {
-                    x.AddBus(busFactory: sp => Bus.Factory.CreateUsingRabbitMq(configure: cfg =>
+                    x.AddBus(busFactory: sp => Bus.Factory.CreateUsingRabbitMq(configure: bus =>
                     {
                         var rabbit = sp.GetRequiredService<IRabbitSettings>();
 
-                        cfg.Host(host: rabbit.Uri, configure: h =>
+                        bus.Host(host: rabbit.Uri, configure: h =>
                         {
                             h.Username(username: rabbit.UserName);
                             h.Password(password: rabbit.Password);
                         });
 
-                        cfg.ReceiveEndpoint(queueName: "log",
+                        bus.ReceiveEndpoint(queueName: "log",
                             configureEndpoint: e =>
                             {
-                                e.UseMessageRetry(configure: x =>
+                                e.UseMessageRetry(configure: retry =>
                                 {
-                                    x.Exponential(
+                                    retry.Exponential(
                                         retryLimit: 3,
                                         minInterval: TimeSpan.FromMilliseconds(value: 100),
                                         maxInterval: TimeSpan.FromMilliseconds(value: 500),
@@ -82,11 +84,51 @@ namespace log
 
                                 e.Consumer(consumerFactoryMethod: sp.GetRequiredService<IConsumer<LogOrder>>);
                             });
+
+                        bus.Publish<OrderLogged>(configureTopology: publish =>
+                        {
+                            publish.BindQueue(
+                                exchangeName: "contracts:OrderLogged",
+                                queueName: "order-logged",
+                                configure: binding => { binding.ExchangeType = ExchangeType.Fanout; }
+                            );
+                        });
+
+                        //bus.ReceiveEndpoint(queueName: "order-logged",
+                        //    configureEndpoint: e =>
+                        //    {
+                        //        e.UseMessageRetry(configure: retry =>
+                        //        {
+                        //            retry.Exponential(
+                        //                retryLimit: 3,
+                        //                minInterval: TimeSpan.FromMilliseconds(value: 100),
+                        //                maxInterval: TimeSpan.FromMilliseconds(value: 500),
+                        //                intervalDelta: TimeSpan.FromMilliseconds(value: 100)
+                        //            );
+                        //        });
+
+                        //        e.Consumer(consumerFactoryMethod: sp.GetRequiredService<IConsumer<OrderLogged>>);
+                        //    });
+
+
+                        //bus.Publish<OrderLogged>(configureTopology: publish =>
+                        //{
+                        //    publish.ExchangeType = ExchangeType.Fanout;
+
+                        //    publish.BindQueue(
+                        //        exchangeName: "contracts:OrderLogged",
+                        //        queueName: "order-logged"
+                        //    );
+                        //});
                     }));
                 });
 
                 services.AddHostedService<BusService>();
+                //services.AddHostedService<ProducerService>();
             });
+
+            //EndpointConvention.Map<OrderLogged>(
+            //    destinationAddress: new Uri(uriString: "exchange:contracts:OrderLogged"));
 
             return hostBuilder.RunConsoleAsync();
         }

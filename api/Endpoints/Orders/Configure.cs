@@ -1,6 +1,5 @@
 ﻿using System;
 using MassTransit;
-using MassTransit.ExtensionsDependencyInjectionIntegration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -12,7 +11,7 @@ namespace api.Endpoints.Orders
     {
         public static void AddOrdersEndpoint(this IConfiguration configuration, IServiceCollection services)
         {
-            services.Configure<MongodbSettings>(configuration.GetSection("mongodb"));
+            services.Configure<MongodbSettings>(config: configuration.GetSection(key: "mongodb"));
 
             services.AddSingleton<IMongodbSettings>(implementationFactory: sp =>
                 sp.GetRequiredService<IOptions<MongodbSettings>>().Value);
@@ -20,36 +19,35 @@ namespace api.Endpoints.Orders
             services.AddSingleton(implementationFactory: sp =>
             {
                 var mongodb = sp.GetRequiredService<IMongodbSettings>();
-                var client = new MongoClient(mongodb.ConnectionString);
-                var database = client.GetDatabase(mongodb.DatabaseName);
-                return database.GetCollection<Order>(mongodb.OrdersCollectionName);
+                var client = new MongoClient(connectionString: mongodb.ConnectionString);
+                var database = client.GetDatabase(name: mongodb.DatabaseName);
+                return database.GetCollection<Order>(name: mongodb.OrdersCollectionName);
             });
 
-            services.Configure<RabbitmqSettings>(configuration.GetSection("rabbitmq"));
+            services.Configure<RabbitmqSettings>(config: configuration.GetSection(key: "rabbitmq"));
 
             services.AddSingleton<IRabbitmqSettings>(implementationFactory: sp =>
                 sp.GetRequiredService<IOptions<RabbitmqSettings>>().Value);
 
-            IBusControl CreateBus(IServiceProvider sp)
-            {
-                var rabbitmq = sp.GetRequiredService<IRabbitmqSettings>();
-
-                return Bus.Factory.CreateUsingRabbitMq(configure: cfg =>
+            services.AddMassTransit(configure: cfg => cfg.AddBus(busFactory: sp =>
                 {
-                    cfg.Host(new Uri(rabbitmq.Uri), configure: hc =>
-                    {
-                        hc.Username(rabbitmq.UserName);
-                        hc.Password(rabbitmq.UserPassword);
-                    });
-                });
-            }
+                    var rabbitmq = sp.GetRequiredService<IRabbitmqSettings>();
 
-            void ConfigureMassTransit(IServiceCollectionConfigurator configurator)
-            {
-                configurator.AddBus(CreateBus);
-            }
-
-            services.AddMassTransit(ConfigureMassTransit);
+                    return Bus.Factory.CreateUsingRabbitMq(
+                        configure: bus =>
+                        {
+                            bus.Host(
+                                hostAddress: new Uri(uriString: rabbitmq.Uri),
+                                configure: hc =>
+                                {
+                                    hc.Username(username: rabbitmq.UserName);
+                                    hc.Password(password: rabbitmq.UserPassword);
+                                }
+                            );
+                        }
+                    );
+                })
+            );
 
             services.AddSingleton<IOrderService, OrderService>();
         }
