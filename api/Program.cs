@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace api
 {
@@ -17,6 +18,10 @@ namespace api
                 .ConfigureAppConfiguration(configureDelegate: (ctx, config) =>
                 {
                     config.AddJsonFile(path: "settings.json");
+                })
+                .ConfigureLogging(configureLogging: (_, logging) =>
+                {
+                    logging.AddConsole(configure: options => options.TimestampFormat = "O");
                 })
                 .ConfigureWebHostDefaults(configure: webBuilder => { webBuilder.UseStartup<Startup>(); });
         }

@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using contracts;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace api.Endpoints.Orders
 {
@@ -11,36 +13,37 @@ namespace api.Endpoints.Orders
     [ApiController]
     public class OrdersController : ControllerBase
     {
+        private readonly ILogger logger;
         private readonly IOrderService orderService;
         private readonly ISendEndpointProvider sendEndpointProvider;
 
         public OrdersController(
             IOrderService orderService,
-            ISendEndpointProvider sendEndpointProvider
+            ISendEndpointProvider sendEndpointProvider,
+            ILoggerFactory loggerFactory
         )
         {
             this.orderService = orderService;
             this.sendEndpointProvider = sendEndpointProvider;
+            this.logger = loggerFactory.CreateLogger<OrdersController>();
         }
 
         // GET: api/orders
         [HttpGet]
         public IEnumerable<IOrder> Get()
         {
+            this.logger.LogInformation(message: "GET /api/orders");
+
             return this.orderService.Get();
         }
 
         // GET: api/orders/abc
-        [HttpGet(template: "{id}")]
-        public ActionResult<IOrder> Get(string id)
+        [HttpGet(template: "{id:guid}")]
+        public ActionResult<IOrder> Get(Guid id)
         {
-            if (string.IsNullOrWhiteSpace(value: id))
-                return NotFound();
+            this.logger.LogInformation(message: "GET /api/orders/{0}", id);
 
-            if (!Guid.TryParse(input: id, result: out var idValue))
-                return NotFound();
-
-            var order = this.orderService.Get(id: idValue);
+            var order = this.orderService.Get(id: id);
 
             if (order == null)
                 return NotFound();
@@ -52,6 +55,8 @@ namespace api.Endpoints.Orders
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Order order)
         {
+            this.logger.LogInformation(message: "POST /api/orders {0}", JsonConvert.ToString(value: order));
+
             var createdOrder = this.orderService.Create(order: order);
 
 
@@ -60,13 +65,12 @@ namespace api.Endpoints.Orders
             return Ok(value: createdOrder);
         }
 
-        [HttpPut(template: "{id}")]
-        public IActionResult Put(string id, [FromBody] Order order)
+        [HttpPut(template: "{id:guid}")]
+        public IActionResult Put(Guid id, [FromBody] Order order)
         {
-            if (!Guid.TryParse(input: id, result: out var idValue))
-                return BadRequest();
+            this.logger.LogInformation(message: "PUT /api/orders/{0} {1}", id, JsonConvert.ToString(value: order));
 
-            var current = (Order) this.orderService.Get(id: idValue);
+            var current = (Order) this.orderService.Get(id: id);
 
             if (current == null)
                 return NotFound();
@@ -82,13 +86,12 @@ namespace api.Endpoints.Orders
         }
 
         // DELETE: api/orders/abc
-        [HttpDelete(template: "{id}")]
-        public IActionResult Delete(string id)
+        [HttpDelete(template: "{id:guid}")]
+        public IActionResult Delete(Guid id)
         {
-            if (!Guid.TryParse(input: id, result: out var idValue))
-                return BadRequest();
+            this.logger.LogInformation(message: "DELETE /api/orders/{0}", id);
 
-            var order = this.orderService.Delete(id: idValue);
+            var order = this.orderService.Delete(id: id);
 
             if (order == null)
                 return NotFound();
