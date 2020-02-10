@@ -55,7 +55,7 @@ namespace api.Endpoints.Orders
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Order order)
         {
-            this.logger.LogInformation(message: "POST /api/orders {0}", JsonConvert.ToString(value: order));
+            this.logger.LogInformation(message: "POST /api/orders {0}", JsonConvert.SerializeObject(value: order));
 
             var createdOrder = this.orderService.Create(order: order);
 
@@ -68,7 +68,8 @@ namespace api.Endpoints.Orders
         [HttpPut(template: "{id:guid}")]
         public IActionResult Put(Guid id, [FromBody] Order order)
         {
-            this.logger.LogInformation(message: "PUT /api/orders/{0} {1}", id, JsonConvert.ToString(value: order));
+            this.logger.LogInformation(message: "PUT /api/orders/{0} {1}", id,
+                JsonConvert.SerializeObject(value: order));
 
             var current = (Order) this.orderService.Get(id: id);
 
