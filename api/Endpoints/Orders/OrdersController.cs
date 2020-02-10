@@ -11,16 +11,16 @@ namespace api.Endpoints.Orders
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private readonly IBus bus;
         private readonly IOrderService orderService;
+        private readonly ISendEndpointProvider sendEndpointProvider;
 
         public OrdersController(
             IOrderService orderService,
-            IBus bus
+            ISendEndpointProvider sendEndpointProvider
         )
         {
             this.orderService = orderService;
-            this.bus = bus;
+            this.sendEndpointProvider = sendEndpointProvider;
         }
 
         // GET: api/orders
@@ -54,10 +54,8 @@ namespace api.Endpoints.Orders
         {
             var createdOrder = this.orderService.Create(order: order);
 
-            var sendEndpoint =
-                await this.bus.GetSendEndpoint(address: new Uri(uriString: "exchange:contracts:OrderCreated"));
 
-            await sendEndpoint.Send<OrderCreated>(values: createdOrder);
+            await this.sendEndpointProvider.Send<OrderCreated>(values: createdOrder);
 
             return Ok(value: createdOrder);
         }

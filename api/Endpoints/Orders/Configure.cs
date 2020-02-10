@@ -1,4 +1,5 @@
 ﻿using System;
+using contracts;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,6 +45,9 @@ namespace api.Endpoints.Orders
                                     hc.Password(password: rabbitmq.UserPassword);
                                 }
                             );
+
+                            EndpointConvention.Map<OrderCreated>(
+                                destinationAddress: new Uri(uriString: "exchange:contracts:OrderCreated"));
                         }
                     );
                 })
