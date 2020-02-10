@@ -29,7 +29,8 @@ namespace api.Endpoints.Orders
             var document = new Order
             {
                 Id = Guid.NewGuid(),
-                Amount = order.Amount
+                Amount = order.Amount,
+                CreatedAt = DateTimeOffset.Now
             };
 
             this.collection.InsertOne(document: document);
@@ -45,7 +46,9 @@ namespace api.Endpoints.Orders
                     x.Version == order.Version,
                 update: Builders<Order>.Update.Combine(
                     Builders<Order>.Update.Inc(field: x => x.Version, value: 1),
-                    Builders<Order>.Update.Set(field: x => x.Amount, value: order.Amount)),
+                    Builders<Order>.Update.Set(field: x => x.Amount, value: order.Amount),
+                    Builders<Order>.Update.Set(field: x => x.UpdatedAt, value: DateTimeOffset.Now)
+                ),
                 options: new FindOneAndUpdateOptions<Order, Order> {ReturnDocument = ReturnDocument.After}
             );
         }

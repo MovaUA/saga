@@ -7,5 +7,5 @@
     "uri": "rabbitmq://localhost:5672",
     "userName": "mova",
     "userPassword": "a"
-  } 
+  }
 }

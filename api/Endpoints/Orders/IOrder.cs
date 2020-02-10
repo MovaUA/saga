@@ -7,5 +7,8 @@ namespace api.Endpoints.Orders
         Guid Id { get; }
         int Version { get; }
         int Amount { get; }
+        DateTimeOffset CreatedAt { get; }
+        DateTimeOffset? UpdatedAt { get; }
+        DateTimeOffset? DeletedAt { get; }
     }
 }

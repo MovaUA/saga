@@ -8,13 +8,16 @@ namespace api
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            CreateHostBuilder(args: args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
-            return Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration(configureDelegate: (ctx, config) => { config.AddJsonFile("settings.json"); })
+            return Host.CreateDefaultBuilder(args: args)
+                .ConfigureAppConfiguration(configureDelegate: (ctx, config) =>
+                {
+                    config.AddJsonFile(path: "settings.json");
+                })
                 .ConfigureWebHostDefaults(configure: webBuilder => { webBuilder.UseStartup<Startup>(); });
         }
     }

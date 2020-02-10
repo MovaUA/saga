@@ -52,17 +52,14 @@ namespace api.Endpoints.Orders
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Order order)
         {
-            var result = this.orderService.Create(order: order);
+            var createdOrder = this.orderService.Create(order: order);
 
             var sendEndpoint =
                 await this.bus.GetSendEndpoint(address: new Uri(uriString: "exchange:contracts:OrderCreated"));
 
-            await sendEndpoint.Send<OrderCreated>(values: new
-            {
-                OrderId = result.Id
-            });
+            await sendEndpoint.Send<OrderCreated>(values: createdOrder);
 
-            return Ok(value: result);
+            return Ok(value: createdOrder);
         }
 
         [HttpPut(template: "{id}")]

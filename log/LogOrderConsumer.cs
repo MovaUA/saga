@@ -17,13 +17,17 @@ namespace log
 
         public async Task Consume(ConsumeContext<LogOrder> context)
         {
+            var order = new Order
+            {
+                Id = context.Message.Id,
+                Amount = context.Message.Amount,
+                CreatedAt = context.Message.CreatedAt,
+                LoggedAt = DateTimeOffset.Now
+            };
+
             await this.log.ReplaceOneAsync(
-                    filter: x => x.Id == context.Message.OrderId,
-                    replacement: new Order
-                    {
-                        Id = context.Message.OrderId,
-                        Time = DateTimeOffset.Now
-                    },
+                    filter: x => x.Id == order.Id,
+                    replacement: order,
                     options: new ReplaceOptions
                     {
                         IsUpsert = true,
@@ -34,10 +38,7 @@ namespace log
                 .ConfigureAwait(continueOnCapturedContext: false);
 
             await context.Publish<OrderLogged>(
-                values: new
-                {
-                    context.Message.OrderId
-                },
+                values: order,
                 cancellationToken: context.CancellationToken
             );
         }

@@ -12,5 +12,8 @@ namespace saga
 
         public string CurrentState { get; set; }
         public int Version { get; set; }
+        public int Amount { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset? LoggedAt { get; set; }
     }
 }

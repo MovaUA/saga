@@ -81,7 +81,6 @@ namespace saga
                     }
                 );
 
-                //services.AddHostedService<TestService>();
                 services.AddHostedService<MassTransitService>();
             });
 

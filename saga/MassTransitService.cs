@@ -19,16 +19,16 @@ namespace saga
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            this.logger.LogInformation("starting bus...");
+            this.logger.LogInformation(message: "starting bus...");
 
-            return this.bus.StartAsync(cancellationToken);
+            return this.bus.StartAsync(cancellationToken: cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            this.logger.LogInformation("stopping bus...");
+            this.logger.LogInformation(message: "stopping bus...");
 
-            return this.bus.StopAsync(cancellationToken);
+            return this.bus.StopAsync(cancellationToken: cancellationToken);
         }
     }
 }

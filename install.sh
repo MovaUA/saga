@@ -10,7 +10,8 @@ minikube addons enable logviewer
 minikube addons enable metrics-server
 minikube addons enable storage-provisioner
 
-helm install mongo stable/mongodb --set mongodbRootPassword=a,mongodbUsername=mova,mongodbPassword=a,mongodbDatabase=api
+# helm install mongo stable/mongodb --set mongodbRootPassword=a,mongodbUsername=mova,mongodbPassword=a,mongodbDatabase=api
+helm install mongo stable/mongodb --set mongodbRootPassword=a
 helm install rabbit stable/rabbitmq --set rabbitmq.username=mova,rabbitmq.password=a
 
 # minikube dashboard

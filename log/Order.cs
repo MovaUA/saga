@@ -8,6 +8,8 @@ namespace log
         [BsonId]
         public Guid Id { get; set; }
 
-        public DateTimeOffset Time { get; set; }
+        public int Amount { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset LoggedAt { get; set; }
     }
 }

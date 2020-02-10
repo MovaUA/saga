@@ -4,6 +4,8 @@ namespace contracts
 {
     public interface OrderCreated
     {
-        Guid OrderId { get; }
+        Guid Id { get; }
+        int Amount { get; }
+        DateTimeOffset CreatedAt { get; }
     }
 }

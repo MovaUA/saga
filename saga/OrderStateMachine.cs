@@ -20,27 +20,31 @@ namespace saga
                 propertyExpression: () => OrderCreated,
                 configureEventCorrelation: e =>
                 {
-                    e.CorrelateById(selector: ctx => ctx.Message.OrderId);
+                    e.CorrelateById(selector: ctx => ctx.Message.Id);
 
-                    //e.InsertOnInitial = true;
+                    e.InsertOnInitial = true;
 
-                    //e.SetSagaFactory(factoryMethod: ctx => new OrderState { CorrelationId = ctx.Message.OrderId });
+                    e.SetSagaFactory(factoryMethod: ctx => new OrderState
+                    {
+                        CorrelationId = ctx.Message.Id,
+                        Amount = ctx.Message.Amount,
+                        CreatedAt = ctx.Message.CreatedAt
+                    });
                 }
             );
 
             Event(
                 propertyExpression: () => OrderLogged,
-                configureEventCorrelation: e => { e.CorrelateById(selector: ctx => ctx.Message.OrderId); }
+                configureEventCorrelation: e => { e.CorrelateById(selector: ctx => ctx.Message.Id); }
             );
 
-            InstanceState(instanceStateProperty: x => x.CurrentState);
-
             //InstanceState(instanceStateProperty: x => x.CurrentState, Created, Logged);
+            InstanceState(instanceStateProperty: x => x.CurrentState);
 
             Initially(
                 When(@event: OrderCreated)
                     .SendAsync(
-                        messageFactory: ctx => ctx.Init<LogOrder>(values: new {OrderId = ctx.Instance.CorrelationId})
+                        messageFactory: ctx => ctx.Init<LogOrder>(values: ctx.Data)
                     )
                     .TransitionTo(toState: Created)
             );
@@ -48,8 +52,13 @@ namespace saga
             During(
                 state: Created,
                 When(@event: OrderLogged)
+                    .Then(action: x => x.Instance.LoggedAt = x.Data.LoggedAt)
                     .TransitionTo(toState: Logged)
             );
+
+            //DuringAny(When(@event: OrderLogged).Finalize());
+
+            //SetCompletedWhenFinalized();
         }
     }
 }

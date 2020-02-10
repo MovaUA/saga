@@ -4,6 +4,7 @@ namespace contracts
 {
     public interface OrderLogged
     {
-        Guid OrderId { get; }
+        Guid Id { get; }
+        DateTimeOffset LoggedAt { get; }
     }
 }
