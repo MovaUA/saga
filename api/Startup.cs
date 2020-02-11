@@ -23,6 +23,8 @@ namespace api
         {
             Configuration.AddOrdersEndpoint(services: services);
 
+            services.AddHostedService<OrderCreatedOutboxService>();
+
             services.AddControllers();
         }
 

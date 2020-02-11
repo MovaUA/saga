@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using contracts;
-using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -15,16 +12,13 @@ namespace api.Endpoints.Orders
     {
         private readonly ILogger logger;
         private readonly IOrderService orderService;
-        private readonly ISendEndpointProvider sendEndpointProvider;
 
         public OrdersController(
             IOrderService orderService,
-            ISendEndpointProvider sendEndpointProvider,
             ILoggerFactory loggerFactory
         )
         {
             this.orderService = orderService;
-            this.sendEndpointProvider = sendEndpointProvider;
             this.logger = loggerFactory.CreateLogger<OrdersController>();
         }
 
@@ -53,14 +47,11 @@ namespace api.Endpoints.Orders
 
         // POST: api/orders
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Order order)
+        public IActionResult Post([FromBody] Order order)
         {
             this.logger.LogInformation(message: "POST /api/orders {0}", JsonConvert.SerializeObject(value: order));
 
             var createdOrder = this.orderService.Create(order: order);
-
-
-            await this.sendEndpointProvider.Send<OrderCreated>(values: createdOrder);
 
             return Ok(value: createdOrder);
         }

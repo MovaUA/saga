@@ -20,9 +20,30 @@ namespace api.Endpoints.Orders
             services.AddSingleton(implementationFactory: sp =>
             {
                 var mongodb = sp.GetRequiredService<IMongodbSettings>();
-                var client = new MongoClient(connectionString: mongodb.ConnectionString);
-                var database = client.GetDatabase(name: mongodb.DatabaseName);
+                return new MongoClient(connectionString: mongodb.ConnectionString);
+            });
+
+            services.AddSingleton(implementationFactory: sp =>
+            {
+                var mongodb = sp.GetRequiredService<IMongodbSettings>();
+                var client = sp.GetRequiredService<MongoClient>();
+                return client.GetDatabase(name: mongodb.DatabaseName);
+            });
+
+            services.AddSingleton(implementationFactory: sp =>
+            {
+                var mongodb = sp.GetRequiredService<IMongodbSettings>();
+                var database = sp.GetRequiredService<IMongoDatabase>();
+                database.CreateCollection(name: mongodb.OrdersCollectionName);
                 return database.GetCollection<Order>(name: mongodb.OrdersCollectionName);
+            });
+
+            services.AddSingleton(implementationFactory: sp =>
+            {
+                var database = sp.GetRequiredService<IMongoDatabase>();
+                var collectionName = "created-order-outbox";
+                database.CreateCollection(name: collectionName);
+                return database.GetCollection<OrderCreatedOutbox>(name: collectionName);
             });
 
             services.Configure<RabbitmqSettings>(config: configuration.GetSection(key: "rabbitmq"));

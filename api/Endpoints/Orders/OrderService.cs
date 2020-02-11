@@ -1,46 +1,91 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using MassTransit;
 using MongoDB.Driver;
 
 namespace api.Endpoints.Orders
 {
     public class OrderService : IOrderService
     {
-        private readonly IMongoCollection<Order> collection;
+        private readonly MongoClient client;
+        private readonly IMongoCollection<Order> orders;
+        private readonly IMongoCollection<OrderCreatedOutbox> outbox;
 
-        public OrderService(IMongoCollection<Order> collection)
+        public OrderService(
+            MongoClient client,
+            IMongoCollection<Order> orders,
+            IMongoCollection<OrderCreatedOutbox> outboxOrders
+        )
         {
-            this.collection = collection;
+            this.client = client;
+            this.orders = orders;
+            this.outbox = outboxOrders;
         }
 
         public IEnumerable<IOrder> Get()
         {
-            return this.collection
+            return this.orders
                 .Find(filter: order => true).ToCursor().ToEnumerable();
         }
 
         public IOrder Get(Guid id)
         {
-            return this.collection.Find(filter: book => book.Id == id).FirstOrDefault();
+            return this.orders.Find(filter: book => book.Id == id).FirstOrDefault();
         }
 
         public IOrder Create(IOrder order)
         {
-            var document = new Order
+            var orderDoc = new Order
             {
-                Id = Guid.NewGuid(),
+                Id = NewId.NextGuid(),
                 Amount = order.Amount,
                 CreatedAt = DateTimeOffset.Now
             };
 
-            this.collection.InsertOne(document: document);
+            var outboxOrder = new OrderCreatedOutbox
+            {
+                Id = orderDoc.Id,
+                Amount = orderDoc.Amount,
+                CreatedAt = orderDoc.CreatedAt
+            };
 
-            return document;
+            var to = new TransactionOptions(
+                readPreference: ReadPreference.Primary,
+                readConcern: ReadConcern.Local,
+                writeConcern: WriteConcern.WMajority,
+                maxCommitTime: TimeSpan.FromSeconds(value: 3)
+            );
+
+            var cancellationToken = CancellationToken.None;
+
+            using (var session = this.client.StartSession())
+            {
+                session.WithTransaction(
+                    callback: (s, ct) =>
+                    {
+                        this.orders.InsertOne(session: s, document: orderDoc, cancellationToken: ct);
+
+                        this.outbox.InsertOne(session: s, document: outboxOrder, cancellationToken: ct);
+
+                        return true;
+                    },
+                    transactionOptions: to,
+                    cancellationToken: cancellationToken
+                );
+            }
+
+            //this.orders.InsertOne(document: orderDoc, cancellationToken: cancellationToken);
+
+            //this.outbox.InsertOne(document: outboxOrder, cancellationToken: cancellationToken);
+
+
+            return orderDoc;
         }
 
         public IOrder Update(IOrder order)
         {
-            return this.collection.FindOneAndUpdate<Order, Order>(
+            return this.orders.FindOneAndUpdate<Order, Order>(
                 filter: x =>
                     x.Id == order.Id &&
                     x.Version == order.Version,
@@ -55,7 +100,7 @@ namespace api.Endpoints.Orders
 
         public IOrder Delete(Guid id)
         {
-            return this.collection.FindOneAndDelete(filter: x => x.Id == id);
+            return this.orders.FindOneAndDelete(filter: x => x.Id == id);
         }
     }
 }
