@@ -20,7 +20,7 @@
     <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="6.0.2" />
     <PackageReference Include="masstransit.rabbitmq" Version="6.0.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.1" />
-    <PackageReference Include="mongodb.driver" Version="2.10.1" />
+    <PackageReference Include="mongodb.driver" Version="2.19.0" />
   </ItemGroup>
 
   <ItemGroup>
